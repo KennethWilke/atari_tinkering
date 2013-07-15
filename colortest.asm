@@ -1,239 +1,64 @@
-; Modified version of the example source from 
+; Modified version of the example source from
 ;  http://atariage.com/forums/topic/27194-session-8-our-first-kernel/
 
 	processor 6502
 	include "vcs.h"
-    ORG $F000
-Reset
-StartOfFrame
-	; Start of vertical blank processing
-	lda #0
-
-            sta VBLANK
-
-
-
-            lda #2
-
-            sta VSYNC
-
-            
-
-               ; 3 scanlines of VSYNCH signal...
-
-
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-
-
-            lda #0
-
-            sta VSYNC           
-
-
-
-               ; 37 scanlines of vertical blank...
-
-
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-            
-
-
-
-
-
-               ; 192 scanlines of picture...
-
- 
-
-                ldx #0
-
-                REPEAT 192; scanlines
-
-
-
-                    inx
-
-                    stx COLUBK
-
-                    sta WSYNC
-
-
-
-                REPEND
-
-
-
- 
-
-            lda #%01000010
-
-            sta VBLANK                     ; end of screen - enter blanking
-
-
-
-               ; 30 scanlines of overscan...
-
-
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-                sta WSYNC
-
-
-
-            jmp StartOfFrame
-
-
-
-
-
-            ORG $FFFA
-
-
-
-            .word Reset          ; NMI
-
-            .word Reset          ; RESET
-
-            .word Reset          ; IRQ
-
-
-
-        END
-
+	ORG $F000
+reset
+frame_start
+	; clear vblank
+	LDA #0
+	STA VBLANK
+
+	; set background color to black
+	STA COLUBK
+
+	; Wait for vsync
+	LDA #2
+	STA VSYNC
+
+	; wait for 3 scanlines
+	STA WSYNC
+	STA WSYNC
+	STA WSYNC
+
+	; clear vsync flag
+	LDA #0
+	STA VSYNC
+
+	; wait through vertical blank (37 scanlines)
+	LDX #37
+vblank_loop
+	STA WSYNC
+	DEX
+	BNE vblank_loop
+
+	; draw a different color on each scanline  (192 scanlines)
+	LDX #192 ; counter
+	LDY #0   ; color
+color_loop
+	STY COLUBK
+	INY
+	INY
+	STA WSYNC
+	DEX
+	BNE color_loop
+
+	; set vblank
+	LDA #%01000010
+	STA VBLANK
+
+	; wait through overscan (30 lines)
+	LDX #30
+overscan_loop
+	STA WSYNC
+	DEX
+	BNE overscan_loop
+
+	; end of main loop
+	JMP frame_start
+
+	ORG $FFFA   ; Interupt handlers
+	.word reset ; NMI
+	.word reset ; RESET
+	.word reset ; IRQ

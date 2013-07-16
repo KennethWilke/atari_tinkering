@@ -64,13 +64,17 @@ frame_start
 	DEC counter
 	BNE full_wsync_wait ; jump if counter != 0
 
-	; reset count
-	LDA ANIMATION_SPEED
-	STA counter
-
 	; change playfield
 	LDA playfield
-	
+	BNE update_pf1
+	ASL
+	BEQ playfield_done
+	; if A = 0, set pf1
+	LDA #1
+	STA [playfield + 1]
+
+update_pf1
+playfield_done
 
 
 full_wsync_wait
@@ -117,6 +121,8 @@ overscan_loop
 
 	; end of main loop
 	JMP frame_start
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 	ORG $FFFC   ; Interrupt handlers
 	.word reset ; RESET

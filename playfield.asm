@@ -1,33 +1,81 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; playfield test
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; includes and declarations
 
 	processor 6502
 	include "vcs.h"
+ANIMATION_SPEED = 20
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; RAM variables
+
+	SEG.U variables
+	ORG $80
+
+playfield ds 3 ; playfield state
+counter   ds 1 ; animation wait counter
+
+	SEG program
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; program code
+
 	ORG $F000
+
 reset
+; clear RAM and TIA
+	LDX #0
+	TXS
+	PHA
+	TXA
+clear_loop
+	PHA
+	DEX
+	BNE clear_loop
+
+
+	; set background color to black
+	LDA #0
+	STA COLUBK
+
+
+	; init PF0 and counter
+	LDA #%00010000
+	STA PF0
+	STA playfield
+	LDA ANIMATION_SPEED
+	STA counter
+
+
 frame_start
 	; clear vblank
 	LDA #0
 	STA VBLANK
 
-	; set background color to black
-	STA COLUBK
-
 	; Wait for vsync
 	LDA #2
 	STA VSYNC
 
+	; decrement time and check to see if it is time to animate
+	DEC counter
+	BNE full_wsync_wait ; jump if counter != 0
+
+	; reset count
+	LDA ANIMATION_SPEED
+	STA counter
+
+	; change playfield
+	LDA playfield
+	
+
+
+full_wsync_wait
 	STA WSYNC ; 1
-
-	; Load pattern
-	LDX $80
-	INX
-	STX PF1
-
 	STA WSYNC ; 2
-
-	; Store incremented pattern
-	STX $80
-
 	STA WSYNC ; 3
 
 	; clear vsync flag
@@ -45,9 +93,9 @@ vblank_loop
 	LDA #$45
 	STA COLUPF
 
-	; draw a different color on each scanline  (192 scanlines)
+	; draw scanlines with the colorful background  (192 scanlines)
 	LDX #192 ; counter
-	LDY #0   ; color
+	LDY #0
 color_loop
 	STY COLUBK
 	INY
@@ -70,7 +118,6 @@ overscan_loop
 	; end of main loop
 	JMP frame_start
 
-	ORG $FFFA   ; Interupt handlers
-	.word reset ; NMI
+	ORG $FFFC   ; Interrupt handlers
 	.word reset ; RESET
 	.word reset ; IRQ

@@ -1,10 +1,15 @@
-all: colortest playfield
+ASM=dasm $< -f3 -o$@ -s$(@:.bin=.sym)
 
-colortest: colortest.asm
-	dasm colortest.asm -f3 -ocolortest.bin
+all: colortest.bin playfield.bin test.bin
 
-playfield: playfield.asm
-	dasm playfield.asm -f3 -oplayfield.bin
+colortest.bin: colortest.asm
+	$(ASM)
+
+playfield.bin: playfield.asm
+	$(ASM)
+
+test.bin: test.asm
+	$(ASM)
 
 clean:
-	rm -rf colortest.bin playfield.bin
+	@rm -rvf *.bin *.sym

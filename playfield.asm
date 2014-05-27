@@ -74,6 +74,7 @@ frame_start
 	STA [playfield + 1]
 
 update_pf1
+	
 playfield_done
 
 
